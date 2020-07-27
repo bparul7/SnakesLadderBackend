@@ -7,10 +7,20 @@ route.post ('/users', async (req, res) => {
 	const me = new User (req.body)
 	try {
 		await me.save ();
-		res.status (201).send (me);
+		const ret = {
+			status : 1,
+			message : "Successfully created the account",
+			data : me
+		}
+		res.status (201).send (ret);
 	}
 	catch (e) {
-		res.status (500).send ("Some error occured while saving in database:)")
+		const ret = {
+			status : 0,
+			error : "Some error occured while saving to database",
+			data : "false"
+		}
+		res.status (500).send (ret);
 	}
 })
 
@@ -18,10 +28,22 @@ route.post ('/users', async (req, res) => {
 route.post ('/users/login', async(req, res) => {
 	try {
 		const user = await User.loginCredentials (req.body.email, req.body.password);
-		res.send (user);
+		const ret = {
+			status : 1,
+			message : "Successfully Logged in",
+			data : {
+
+			}
+		}
+		res.send (ret);
 	}
 	catch (e) {
-		res.status (400).send ("Unable to Login");
+		const ret = {
+			status : 0,
+			error : "Unable to Login",
+			data : "false"
+		}
+		res.status (400).send (ret);
 	}
 })
 
