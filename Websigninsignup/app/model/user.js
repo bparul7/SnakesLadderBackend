@@ -1,6 +1,7 @@
 const validator = require ('validator')
 const mongoose = require ('mongoose')
 const bcrypt = require ('bcrypt')
+const jwt = require ('jsonwebtoken')
 //Validator Functions : https://www.npmjs.com/package/validator
 //Mongoose Validator Schema Types : https://mongoosejs.com/docs/schematypes.html
 //make model to store in database
@@ -12,7 +13,7 @@ const userSchema = new mongoose.Schema ({
 		lowercase : true,
 		validate (value) {
 			if (value.length < 5)
-				throw new Error ('String Length should be greater than 4')
+				throw new Error ('Name Length should be greater than 4')
 		}
 	},
 	email : {
@@ -32,30 +33,50 @@ const userSchema = new mongoose.Schema ({
 		trim : true,
 		validate (value) {
 			if (value.length <= 6)
-				throw new Error ('Password Too Short')
+				throw new Error ('Password length should be greater than 6')
 			if (value.toLowerCase().includes("password"))
-				throw new Error ("Try some Other Password")
+				throw new Error ("Password shouldnot include word password")
 		}
-	}
+	},
+	tokens : [{
+		token : {
+			type : String,
+			required : true,
+		}
+	}]
 })
+
+userSchema.methods.generateToken = async function () {
+	const user = this;
+	try {
+		const token = await jwt.sign ({_id : user._id.toString()}, '@parulbansal');
+		user.tokens = user.tokens.concat ({token : token});
+		await user.save();
+		return token;
+	}
+	catch (e) {
+		throw new Error ("Unable to generate Token");
+	}
+}
 
 userSchema.statics.loginCredentials = async (email, password) => {
 	const user = await User.findOne ({email : email});
 	if (!user) {
-		throw new Error ("Unable to Login");
+		throw new Error ("Email not found, Sign In first");
 	}
 	const isMatch = await bcrypt.compare (password , user.password);
 	if (!isMatch) {
-		throw new Error ("Unable to Login");
+		throw new Error ("Incorrect Password, Try some other password");
 	}
 	return user;
 }
 
 userSchema.pre ('save', async function (next) {
 	const user = this;
-	if (!user.isModified (user.password)) {
+	if (user.isModified ('password')) {
 		user.password = await bcrypt.hash (user.password, 8);
 	}
+	next();
 })
 
 const User = mongoose.model ('User', userSchema)
