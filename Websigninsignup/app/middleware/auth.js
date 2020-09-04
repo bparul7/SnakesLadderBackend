@@ -5,6 +5,7 @@ const jwt = require ('jsonwebtoken')
 const auth = async (req, res, next) => {
 	try {
 		//get token 
+		console.log ("INSIDE AUTH")
 		const token = req.header ('Authorization').replace ('Bearer ', '');
 		const payload = jwt.verify (token, '@parulbansal')
 		const user = await User.findOne ({_id : payload._id, 'tokens.token' : token})

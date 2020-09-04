@@ -60,6 +60,45 @@ route.get ('/users/me', auth, async(req, res) => {
 	res.send (ans);
 })
 
+//Update Profile
+route.patch ('/users/updateme', auth, async(req, res) => {
+	try {
+		const user = req.user;
+		console.log (user)
+		const change = req.body;
+		console.log (change)
+		const update = (Object.keys (change));
+		const fields = ["name", "password"];
+		for (const v in update) {
+			if (!fields.includes (update[v])) {
+				const ans = {
+					status : 0,
+					error : update[v] + " :Key cannot be updated",
+					data : {}
+				}
+				res.send (ans);
+			}
+		}
+		update.forEach ((upd) => {
+			user[upd] = change[upd]
+		})
+		await user.save();
+		const ans = {
+			status : 1,
+			message : "user information have been updated",
+			data : user
+		}
+		res.send (ans)
+	}
+	catch (e) {
+		const ans = {
+			status : 0,
+			error : e.message,
+			data : {}
+		}
+		res.send (ans)
+	}
+})
 //LogOut
 route.post ('/users/logOut', auth, async (req, res) => {
 	const user = req.user;
