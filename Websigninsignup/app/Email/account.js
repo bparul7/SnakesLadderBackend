@@ -3,8 +3,8 @@ const sendGridApiKey = process.env.SENDGRID_API_KEY || 'SG.u97UItHpR9yH-aJ1zfSP6
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(sendGridApiKey);
 
-const SendVerificationEmail = (email, key) => {
-	sgMail.send ({
+const SendVerificationEmail = async (email, key) => {
+	await sgMail.send ({
 		to : email,
 		from : 'bparul999@gmail.com',
 		subject : 'Verify Your Account',
