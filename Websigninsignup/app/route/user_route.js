@@ -57,7 +57,7 @@ route.post ('/users/login', async(req, res) => {
 
 //resend OTP
 route.get ('/users/me/resendOTP', auth, async (req, res) => {
-	SendVerificationEmail (user.email, 'Secret'+user._id);
+	SendVerificationEmail (req.user.email, 'Secret'+req.user._id);
 	res.send( "OTP sent, please verify")
 })
 
