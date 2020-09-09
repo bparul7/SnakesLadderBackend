@@ -43,7 +43,11 @@ const userSchema = new mongoose.Schema ({
 			type : String,
 			required : true,
 		}
-	}]
+	}],
+	verify : {
+		type : Boolean,
+		default : 0
+	}
 })
 
 userSchema.methods.generateToken = async function () {

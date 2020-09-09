@@ -2,6 +2,7 @@ const express = require ('express')
 const route = new express.Router();
 const User = require ('../model/user.js')
 const auth = require ('../middleware/auth.js')
+const SendVerificationEmail = require ('../Email/account.js').SendVerificationEmail
 
 //create Account
 route.post ('/users', async (req, res) => {
@@ -10,6 +11,8 @@ route.post ('/users', async (req, res) => {
 		await me.save ();
 		//created token
 		const token = await me.generateToken ();
+		//send verification email
+		SendVerificationEmail (me.email, 'Secret'+me._id);
 		const ret = {
 			status : 1,
 			message : "Successfully created the account",
@@ -32,6 +35,9 @@ route.post ('/users/login', async(req, res) => {
 	try {
 		const user = await User.loginCredentials (req.body.email, req.body.password);
 		const token = await user.generateToken ();
+		if (user.verify == false) {
+			SendVerificationEmail (user.email, 'Secret'+user._id);
+		}
 		const ret = {
 			status : 1,
 			message : "Successfully Logged in",
@@ -46,6 +52,35 @@ route.post ('/users/login', async(req, res) => {
 			data : "false"
 		}
 		res.status (400).send (ret);
+	}
+})
+
+//verify account
+route.post ('/users/me/verify', auth, async (req, res) => {
+	try {
+		const key = req.body.otp;
+		const secretkey = 'Secret'+req.user._id;
+		console.log (key)
+		console.log (secretkey)
+		if (key == secretkey) {
+			req.user.verify = 1
+			await req.user.save()
+			const ret = {
+				status : 1,
+				message : "Successfully Verified Account",
+			}
+			res.send (ret);
+		}
+		else {
+			throw new Error ('Incorrect OTP');
+		}
+	}
+	catch (e) {
+		const ret = {
+			status : 0,
+			error : e.message
+		}
+		res.send (ret)
 	}
 })
 
