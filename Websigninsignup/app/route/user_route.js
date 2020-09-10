@@ -12,7 +12,7 @@ route.post ('/users', async (req, res) => {
 		//created token
 		const token = await me.generateToken ();
 		//send verification email
-		await SendVerificationEmail (me.email, 'Secret'+me._id);
+		SendVerificationEmail (me.email, 'Secret'+me._id);
 		const ret = {
 			status : 1,
 			message : "Successfully created the account",
@@ -36,7 +36,7 @@ route.post ('/users/login', async(req, res) => {
 		const user = await User.loginCredentials (req.body.email, req.body.password);
 		const token = await user.generateToken ();
 		if (user.verify == false) {
-			await SendVerificationEmail (user.email, 'Secret'+user._id);
+			SendVerificationEmail (user.email, 'Secret'+user._id);
 		}
 		const ret = {
 			status : 1,
@@ -58,7 +58,7 @@ route.post ('/users/login', async(req, res) => {
 //resend OTP
 route.get ('/users/me/resendOTP', auth, async (req, res) => {
 	try {
-		await SendVerificationEmail (req.user.email, 'Secret'+req.user._id);
+		SendVerificationEmail (req.user.email, 'Secret'+req.user._id);
 		res.send( "OTP sent, please verify")
 	}
 	catch (e) {

@@ -4,12 +4,12 @@ const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(sendGridApiKey);
 
 const SendVerificationEmail = async (email, key) => {
-	await sgMail.send ({
-		to : email,
-		from : 'bparul999@gmail.com',
-		subject : 'Verify Your Account',
-		text : 'OTP: ' + key
-	})
+		sgMail.send ({
+			to : email,
+			from : 'bparul999@gmail.com',
+			subject : 'Verify Your Account',
+			text : 'OTP: ' + key
+		})
 }
 
 module.exports = {
