@@ -4,6 +4,11 @@ const User = require ('../model/user.js')
 const auth = require ('../middleware/auth.js')
 const SendVerificationEmail = require ('../Email/account.js').SendVerificationEmail
 const SendEmail = require ('../Email/nodemailer.js')
+const multer = require ('multer')
+const cloudinary = require ('cloudinary')
+const Datauri = require ('datauri/parser')
+const dUri = new Datauri();
+const avatarStore = require ('../model/avatarList.js')
 console.log (SendEmail)
 //create Account
 route.post ('/users', async (req, res) => {
@@ -188,6 +193,136 @@ route.post ('/users/logOutAll', auth, async (req, res) => {
 			message : e.message
 		}
 		res.send (ans)
+	}
+})
+
+//upload images
+const upload = multer ({
+	limits : {
+		fileSize : 1000000
+	},
+	fileFilter (req, file, cb) {
+		if (!file.originalname.match (/\.(jpg|jpeg|png)$/)) {
+			return cb (new Error ("Please upload correct image file"))
+		}
+		cb (undefined, true)
+	}
+})
+
+route.post ('/upload', upload.single('avatar'), async (req, res) => {
+	try {
+		if (req.file) {
+			const ans = dUri.format(req.file.originalname+'.jpg', req.file.buffer);
+			const file = ans.content
+			var image;
+			await cloudinary.uploader.upload (file, (result, error) => {
+				if (error)
+					throw new Error (error)
+				image = result.url
+			})
+			const view = new avatarStore({
+				url : image
+			})
+			await view.save();
+			res.send ({
+				status : 1,
+				message : "Your image has been uploaded",
+				data : {
+					image
+				}
+			})
+		}
+		else {
+			throw new Error ("Please upload some file")
+		}
+	}
+	catch (e) {
+		res.send ({
+			status : 0,
+			error : e.message
+		})
+	}
+}, (error, req, res, next) => {
+	res.send ({
+		status : 0,
+		error : error.message
+	})
+})
+
+//fetch all avatar
+route.get ('/allAvatar', async (req, res) => {
+	try {
+		const ans = await avatarStore.find ();
+		res.send ({
+			status : 1,
+			data : ans
+		})
+	}
+	catch (e) {
+		res.send ({
+			status : 0,
+			error : e.message
+		})
+	}
+})
+
+route.post ('/users/me/avatar', auth, async (req, res) => {
+	try {
+		if (req.body.url) {
+			req.user.avatar = req.body.url
+			await req.user.save();
+			res.send ({
+				status : 1,
+				message : "Your avatar has been updated"
+			})
+		}
+		else {
+			throw new Error ("Please upload some avatar")
+		}
+	}
+	catch (e) {
+		res.send ({
+			status : 0,
+			error : e.message
+		})
+	}
+})
+
+route.delete ('/users/me/avatar', auth, async (req, res) => {
+	try {
+		req.user.avatar = ""
+		await req.user.save()
+		res.send ({
+			status : 1,
+			message : "Your avatar has been deleted"
+		})
+	}
+	catch (e) {
+		res.send ({
+			status : 0,
+			error : e.message
+		})
+	}
+})
+
+route.get ('/users/me/avatar', auth, async (req, res) => {
+	try {
+		const url = req.user.avatar;
+		if (!(url === "")) {
+			res.send ({
+				status : 1,
+				avatar : url
+			})
+		}
+		else {
+			throw new Error ("You have not added any avatar")
+		}
+	}
+	catch (e) {
+		res.send ({
+			status : 0,
+			error : e.message
+		})
 	}
 })
 
